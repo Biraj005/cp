@@ -1,23 +1,26 @@
 class Solution {
-  private:
-    void dfs(int Node,vector<bool>&visited,vector<vector<int>>&adj,
-    vector<int>&ans){
-        
-        visited[Node] = true;
-        for(auto &it:adj[Node]){
-            if(!visited[it]) dfs(it,visited,adj,ans);
-        }
-        ans.push_back(Node);
-    }
   public:
-    vector<int> topoSort(int V, vector<vector<int>>& adj) {        
-        vector<bool>visited(V,false);
-         vector<int>ans;
-        for(int i = 0 ; i < V;i++){
-            if(!visited[i]) dfs(i,visited,adj,ans);
-        }
-        reverse(ans.begin(),ans.end());
-        
-        return ans;
+    vector<int> topoSort(int V, vector<vector<int>>& adj) {         
+       vector<int>ind(V);
+       for(int i=0;i<V;i++){
+           for(auto &it:adj[i]){
+               ind[it]++;
+           }
+       }
+       queue<int>q;
+       for(int i=0;i<V;i++){
+           if(ind[i]==0) q.push(i);
+       }
+       vector<int>ans;
+       while(!q.empty()){
+           int node = q.front();
+           q.pop();
+           ans.push_back(node);
+           for(auto &it:adj[node]){
+               ind[it]--;
+               if(ind[it]==0)q.push(it);
+           }
+       }
+      return ans;
     }
 };
