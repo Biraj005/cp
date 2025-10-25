@@ -1,72 +1,65 @@
-#include <bits/stdc++.h>
+ #include <bits/stdc++.h>
 using namespace std;
 
-class segTree
-{
-    vector<int> seg;
-    int size;
+template <typename NodeT>
+struct SegTree {
+    int n;
+    vector<NodeT> st;
+    function<NodeT(const NodeT&, const NodeT&)> merge;
+    NodeT idNode;
 
-    void build(int root, int low, int high, vector<int> &arr)
-    {
-        if (low == high)
-        {
-            seg[root] = arr[low];
-            return;
-        }
-        int mid = (low + high) / 2;
-        build(root * 2 + 1, low, mid, arr);
-        build(root * 2 + 2, mid + 1, high, arr);
-        seg[root] = min(seg[2 * root + 1], seg[2 * root + 2]);
+    SegTree() = default;
+
+    SegTree(int _n,
+            function<NodeT(const NodeT&, const NodeT&)> _merge,
+            NodeT _idNode)
+        : n(_n), st(4 * _n, _idNode), merge(_merge), idNode(_idNode) {}
+
+    SegTree(const vector<NodeT>& arr,
+            function<NodeT(const NodeT&, const NodeT&)> _merge,
+            NodeT _idNode)
+        : n((int)arr.size()), st(4 * arr.size(), _idNode),
+          merge(_merge), idNode(_idNode) {
+        build(1, 0, n - 1, arr);
     }
 
-    int query(int root, int low, int high, int l, int r)
-    {
-        if (l > high || r < low)
-            return INT_MAX;
-        if (low >= l && high <= r)
-            return seg[root];
-
-        int mid = (low + high) / 2;
-        int left = query(2 * root + 1, low, mid, l, r);
-        int right = query(2 * root + 2, mid + 1, high, l, r);
-        return min(left, right);
-    }
-
-    void update(int root, int low, int high, int idx, int val)
-    {
-        if (low == high)
-        {
-            seg[root] = val;
+    void build(int p, int l, int r, const vector<NodeT>& arr) {
+        if (l == r) {
+            st[p] = arr[l];
             return;
         }
-        int mid = (low + high) / 2;
-        if (idx <= mid)
-            update(2 * root + 1, low, mid, idx, val);
+        int m = (l + r) / 2;
+        build(p << 1, l, m, arr);
+        build(p << 1 | 1, m + 1, r, arr);
+        st[p] = merge(st[p << 1], st[p << 1 | 1]);
+    }
+
+    void update(int idx, const NodeT& val) {
+        update(1, 0, n - 1, idx, val);
+    }
+
+    void update(int p, int l, int r, int idx, const NodeT& val) {
+        if (l == r) {
+            st[p] = val;
+            return;
+        }
+        int m = (l + r) / 2;
+        if (idx <= m)
+            update(p << 1, l, m, idx, val);
         else
-            update(2 * root + 2, mid + 1, high, idx, val);
-
-        seg[root] = min(seg[2 * root + 1], seg[2 * root + 2]);
+            update(p << 1 | 1, m + 1, r, idx, val);
+        st[p] = merge(st[p << 1], st[p << 1 | 1]);
     }
 
-public:
-    segTree(int n)
-    {
-        seg.resize(4 * n);
-        size = n;
+    NodeT query(int L, int R) {
+        return query(1, 0, n - 1, L, R);
     }
 
-    void build(vector<int> &arr)
-    {
-        build(0, 0, size - 1, arr);
-    }
-
-    int query(int l, int r)
-    {
-        return query(0, 0, size - 1, l, r);
-    }
-
-    void update(int idx, int val)
-    {
-        update(0, 0, size - 1, idx, val);
+    NodeT query(int p, int l, int r, int L, int R) {
+        if (R < l || r < L) return idNode;
+        if (L <= l && r <= R) return st[p];
+        int m = (l + r) / 2;
+        return merge(query(p << 1, l, m, L, R),
+                     query(p << 1 | 1, m + 1, r, L, R));
     }
 };
